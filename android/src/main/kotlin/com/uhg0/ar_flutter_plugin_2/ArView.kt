@@ -500,6 +500,7 @@ class ArView(
                         if (node != null) {
                             var anchorName: String? = null
                             var currentNode: Node? = node
+                            val nodeName = node.name
                             while (currentNode != null) {
                                 anchorNodesMap.forEach { (name, anchorNode) ->
                                     if (currentNode == anchorNode) {
@@ -511,7 +512,7 @@ class ArView(
                                 currentNode = currentNode.parent
                             }
                             if(handleTaps) {
-                                objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
+                                objectChannel.invokeMethod("onNodeTap", listOf(nodeName))
                             }
                             true
                         } else {
