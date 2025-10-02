@@ -45,4 +45,4 @@ repomix-output.txt
 *.log
 .env
 *.tmp
-
+.DS_Store

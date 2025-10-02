@@ -1,5 +1,6 @@
 import 'dart:math' show sqrt;
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin_2/models/ar_anchor.dart';
@@ -49,9 +50,18 @@ class ARSessionManager {
   /// Returns the camera pose in Matrix4 format with respect to the world coordinate system of the [ARView]
   Future<Matrix4?> getCameraPose() async {
     try {
-      final serializedCameraPose =
-          await _channel.invokeMethod<List<dynamic>>('getCameraPose', {});
-      return MatrixConverter().fromJson(serializedCameraPose!);
+      if (Platform.isAndroid) {
+        final serializedCameraPose = await _channel.invokeMethod<Map<dynamic, dynamic>>('getCameraPose', {});
+        final position = serializedCameraPose!['position'];
+        final rotation = serializedCameraPose!['rotation'];
+
+        final translation = Vector3(position!['x'], position!['y'], position!['z']);
+        final quaternion = Quaternion(rotation!['x'], rotation!['y'], rotation!['z'], rotation!['w']);
+        return Matrix4.compose(translation, quaternion, Vector3.all(1.0));
+      } else {
+        final serializedCameraPose = await _channel.invokeMethod<List<dynamic>>('getCameraPose', {});
+        return MatrixConverter().fromJson(serializedCameraPose!);
+      }
     } catch (e) {
       print('Error caught: ' + e.toString());
       return null;
@@ -122,7 +132,7 @@ class ARSessionManager {
   }
 
   //Show or hide planes
-  void showPlanes(bool showPlanes){
+  void showPlanes(bool showPlanes) {
     _channel.invokeMethod<void>('showPlanes', {
     "showPlanes": showPlanes,
     });
@@ -138,8 +148,7 @@ class ARSessionManager {
           if (onError != null) {
             onError!(call.arguments[0]);
             print(call.arguments);
-          }
-          else{
+          } else {
             ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
                 content: Text(call.arguments[0]),
                 action: SnackBarAction(
@@ -206,7 +215,6 @@ class ARSessionManager {
       'handleRotation': handleRotation,
     });
   }
-
 
   /// Dispose the AR view on the platforms to pause the scenes and disconnect the platform handlers.
   /// You should call this before removing the AR view to prevent out of memory erros
