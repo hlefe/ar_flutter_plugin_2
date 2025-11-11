@@ -247,11 +247,14 @@ class ArView(
                     override fun onMoveEnd(detector: MoveGestureDetector, e: MotionEvent) {
                         if (handlePans) {
                             super.onMoveEnd(detector, e)
-                            val transformMap = mapOf(
-                                "name" to name,
-                                "transform" to transform.toFloatArray().toList()
-                            )
-                            objectChannel.invokeMethod("onPanEnd", transformMap)
+                            // Only invoke callback if name exists (defensive check)
+                            name?.let { nodeName ->
+                                val transformMap = mapOf(
+                                    "name" to nodeName,
+                                    "transform" to transform.toFloatArray().toList()
+                                )
+                                objectChannel.invokeMethod("onPanEnd", transformMap)
+                            }
                         }
                     }
 
@@ -276,11 +279,14 @@ class ArView(
                     override fun onRotateEnd(detector: RotateGestureDetector, e: MotionEvent) {
                         if (handleRotation) {
                             super.onRotateEnd(detector, e)
-                            val transformMap = mapOf(
-                                "name" to name,
-                                "transform" to transform.toFloatArray().toList()
-                            )
-                            objectChannel.invokeMethod("onRotationEnd", transformMap)
+                            // Only invoke callback if name exists (defensive check)
+                            name?.let { nodeName ->
+                                val transformMap = mapOf(
+                                    "name" to nodeName,
+                                    "transform" to transform.toFloatArray().toList()
+                                )
+                                objectChannel.invokeMethod("onRotationEnd", transformMap)
+                            }
                         }
                     }
                 }.apply {
