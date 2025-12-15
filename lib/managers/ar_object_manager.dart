@@ -190,7 +190,6 @@ class ARObjectManager {
     print("Nom du nœud: $name");
     print("Translation: x=${translation.x}, y=${translation.y}, z=${translation.z}");
     print("Rotation (radians): x=${rotation.x}, y=${rotation.y}, z=${rotation.z}");
-    print("Rotation (degrés): x=${rotation.x * 180 / math.pi}°, y=${rotation.y * 180 / math.pi}°, z=${rotation.z * 180 / math.pi}°");
     print("Scale: x=${scale.x}, y=${scale.y}, z=${scale.z}");
 
     final node = _nodes[name];
