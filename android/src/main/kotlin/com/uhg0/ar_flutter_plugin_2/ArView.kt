@@ -1042,8 +1042,12 @@ class ArView(
             Log.d(TAG, "🔄 Création du CloudAnchorNode...")
             val cloudAnchorNode = CloudAnchorNode(sceneView.engine, anchorNode.anchor!!)
             
-            Log.d(TAG, "☁️ Début de l'hébergement de l'ancre cloud...")
-            cloudAnchorNode.host(session) { cloudAnchorId, state ->
+            // Honor the ttl (days) the Dart ARPlaneAnchor already serializes;
+            // it was previously ignored, so every anchor was hosted with the
+            // 1-day default. TTLs above 1 day require keyless authorization.
+            val ttlDays = (call.argument<Int>("ttl") ?: 1).coerceIn(1, 365)
+            Log.d(TAG, "☁️ Début de l'hébergement de l'ancre cloud (TTL: $ttlDays jours)...")
+            cloudAnchorNode.host(session, ttlDays) { cloudAnchorId, state ->
                 Log.d(TAG, "📡 État de l'hébergement: $state, ID: $cloudAnchorId")
                 mainScope.launch {
                     if (state == CloudAnchorState.SUCCESS && cloudAnchorId != null) {
