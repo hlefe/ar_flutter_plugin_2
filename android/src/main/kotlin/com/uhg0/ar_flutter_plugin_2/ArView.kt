@@ -201,11 +201,18 @@ class ArView(
                     fileLocation = fileLocation
                 }
                 2 -> { // fileSystemAppFolderGLB
-                    fileLocation = fileLocation
+                    // Resolve against the Flutter app documents directory
+                    // (dataDir/app_flutter), where callers place local models.
+                    // Previously this branch was a no-op, so the bare filename
+                    // reached the loader and threw FileNotFoundException.
+                    val documentsPath = viewContext.getApplicationInfo().dataDir
+                    fileLocation = documentsPath + "/app_flutter/" + (nodeData["uri"] as String)
                 }
                  3 -> { //fileSystemAppFolderGLTF2
+                    // Previously assigned to a shadowing local val, so the
+                    // computed path was discarded.
                     val documentsPath = viewContext.getApplicationInfo().dataDir
-                    val fileLocation = documentsPath + "/app_flutter/" + nodeData["uri"] as String
+                    fileLocation = documentsPath + "/app_flutter/" + (nodeData["uri"] as String)
                  }
                 else -> {
                     return null
@@ -221,7 +228,19 @@ class ArView(
         }
 
         return try {
-            sceneView.modelLoader.loadModelInstance(fileLocation)?.let { modelInstance ->
+            // sceneview's string loader resolves non-http locations through
+            // AssetManager, which cannot open absolute filesystem paths -
+            // read those files directly and hand Filament the raw buffer.
+            val loadedInstance = if (fileLocation.startsWith("/")) {
+                val bytes = java.io.File(fileLocation).readBytes()
+                val buffer = java.nio.ByteBuffer.allocateDirect(bytes.size)
+                buffer.put(bytes)
+                buffer.rewind()
+                sceneView.modelLoader.createModelInstance(buffer)
+            } else {
+                sceneView.modelLoader.loadModelInstance(fileLocation)
+            }
+            loadedInstance?.let { modelInstance ->
                 object : ModelNode(
                     modelInstance = modelInstance,
                     scaleToUnits = transformation.first().toFloat(),
