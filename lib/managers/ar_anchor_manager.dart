@@ -98,12 +98,21 @@ class ARAnchorManager {
 
   /// Upload given anchor from the underlying AR scene to the Google Cloud Anchor API
   Future<bool?> uploadAnchor(ARAnchor anchor) async {
+    // Register the anchor as pending BEFORE the platform call: the native
+    // side fires onCloudAnchorUploaded before resolving this method call,
+    // so adding afterwards meant the callback always found an empty
+    // pendingAnchors list and threw "Bad state: No element" - the upload
+    // succeeded but onAnchorUploaded never fired.
     try {
+      pendingAnchors.add(anchor);
       final response =
           await _channel.invokeMethod<bool>('uploadAnchor', anchor.toJson());
-      pendingAnchors.add(anchor);
+      if (response != true) {
+        pendingAnchors.remove(anchor);
+      }
       return response;
-    } on PlatformException catch (e) {
+    } on PlatformException {
+      pendingAnchors.remove(anchor);
       return false;
     }
   }
